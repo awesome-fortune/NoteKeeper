@@ -129,7 +129,10 @@ public class NoteActivity extends AppCompatActivity {
         CourseInfo course = (CourseInfo) mSpinnerCourses.getSelectedItem();
         String emailSubject = mTextNoteTitle.getText().toString();
         String text = "Checkout what I learned in the Pluralsight course \"%s\"\n%s";
-        String emailText = String.format(text, course.getTitle(), mTextNoteText.getText().toString());
+        String emailText = String.format(
+                text,
+                course.getTitle(),
+                mTextNoteText.getText().toString());
 
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("message/rfc2822");
