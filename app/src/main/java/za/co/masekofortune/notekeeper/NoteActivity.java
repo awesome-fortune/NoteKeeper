@@ -2,22 +2,25 @@ package za.co.masekofortune.notekeeper;
 
 import android.content.Intent;
 import android.os.Bundle;
-
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
 import java.util.List;
 
 public class NoteActivity extends AppCompatActivity {
-    public static final String NOTE_INFO = "za.co.masekofortune.notekeeper.NOTE_INFO";
+    public static final String NOTE_POSITION = "za.co.masekofortune.notekeeper.NOTE_POSITION";
+    public static final int POSITION_NOTE_SET = -1;
     private NoteInfo mNote;
     private boolean mIsNewNote;
+    private Spinner mSpinnerCourses;
+    private EditText mTextNoteTitle;
+    private EditText mTextNoteText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +29,7 @@ public class NoteActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        Spinner spinnerCourses = findViewById(R.id.spinner_courses);
+        mSpinnerCourses = findViewById(R.id.spinner_courses);
 
         List<CourseInfo> courses = DataManager.getInstance().getCourses();
 
@@ -35,15 +38,15 @@ public class NoteActivity extends AppCompatActivity {
                 android.R.layout.simple_spinner_item,
                 courses);
         adapterCourses.setDropDownViewResource(android.R.layout.simple_spinner_item);
-        spinnerCourses.setAdapter((adapterCourses));
+        mSpinnerCourses.setAdapter((adapterCourses));
 
         readDisplayStateValues();
 
-        EditText textNoteTitle = findViewById(R.id.text_note_title);
-        EditText textNoteText = findViewById(R.id.text_note_text);
+        mTextNoteTitle = findViewById(R.id.text_note_title);
+        mTextNoteText = findViewById(R.id.text_note_text);
 
         if (!mIsNewNote) {
-            displayNote(spinnerCourses, textNoteTitle, textNoteText);
+            displayNote(mSpinnerCourses, mTextNoteTitle, mTextNoteText);
         }
 
     }
@@ -59,8 +62,12 @@ public class NoteActivity extends AppCompatActivity {
 
     private void readDisplayStateValues() {
         Intent intent = getIntent();
-        mNote = intent.getParcelableExtra(NOTE_INFO);
-        mIsNewNote = mNote == null;
+        int position = intent.getIntExtra(NOTE_POSITION, POSITION_NOTE_SET);
+        mIsNewNote = position == POSITION_NOTE_SET;
+
+        if (!mIsNewNote) {
+            mNote = DataManager.getInstance().getNotes().get(position);
+        }
     }
 
     @Override
@@ -78,10 +85,24 @@ public class NoteActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_send_email) {
+            sendEmail();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void sendEmail() {
+        CourseInfo course = (CourseInfo) mSpinnerCourses.getSelectedItem();
+        String emailSubject = mTextNoteTitle.getText().toString();
+        String text = "Checkout what I learned in the Pluralsight course \"%s\"\n%s";
+        String emailText = String.format(text, course.getTitle(), mTextNoteText.getText().toString());
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("message/rfc2822");
+        intent.putExtra(Intent.EXTRA_SUBJECT, emailSubject);
+        intent.putExtra(Intent.EXTRA_TEXT, emailText);
+        startActivity(intent);
     }
 }
