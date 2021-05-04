@@ -2,6 +2,7 @@ package za.co.masekofortune.notekeeper;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
@@ -16,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 import java.util.List;
 
 public class NoteActivity extends AppCompatActivity {
+    private final String TAG = getClass().getSimpleName();
     public static final String NOTE_POSITION = "za.co.masekofortune.notekeeper.NOTE_POSITION";
     public static final int POSITION_NOTE_SET = -1;
     private NoteInfo mNote;
@@ -67,6 +69,8 @@ public class NoteActivity extends AppCompatActivity {
         if (!mIsNewNote) {
             displayNote(mSpinnerCourses, mTextNoteTitle, mTextNoteText);
         }
+
+        Log.d(TAG, "onCreate");
     }
 
     @Override
@@ -76,6 +80,8 @@ public class NoteActivity extends AppCompatActivity {
         if (outState != null) {
             mViewModel.saveState(outState);
         }
+
+        Log.d(TAG, "onSaveInstanceState");
     }
 
     private void saveOriginalNoteValues() {
@@ -99,20 +105,20 @@ public class NoteActivity extends AppCompatActivity {
 
     private void readDisplayStateValues() {
         Intent intent = getIntent();
-        int position = intent.getIntExtra(NOTE_POSITION, POSITION_NOTE_SET);
-        mIsNewNote = position == POSITION_NOTE_SET;
+        mNotePosition = intent.getIntExtra(NOTE_POSITION, POSITION_NOTE_SET);
+        mIsNewNote = mNotePosition == POSITION_NOTE_SET;
 
         if (mIsNewNote) {
             createNewNote();
-        } else {
-            mNote = DataManager.getInstance().getNotes().get(position);
         }
+
+        mNote = DataManager.getInstance().getNotes().get(mNotePosition);
     }
 
     private void createNewNote() {
         DataManager dm = DataManager.getInstance();
         mNotePosition = dm.createNewNote();
-        mNote = dm.getNotes().get(mNotePosition);
+//        mNote = dm.getNotes().get(mNotePosition);
     }
 
     @Override
@@ -120,6 +126,7 @@ public class NoteActivity extends AppCompatActivity {
         super.onPause();
 
         if (mIsCancelling) {
+            Log.i(TAG, String.format("Cancelling note at position: %d", mNotePosition));
             if (mIsNewNote) {
                 DataManager.getInstance().removeNote(mNotePosition);
             } else {
@@ -128,6 +135,8 @@ public class NoteActivity extends AppCompatActivity {
         } else {
             saveNote();
         }
+
+        Log.d(TAG, "onPause");
     }
 
     private void storePreviousNoteValues() {
